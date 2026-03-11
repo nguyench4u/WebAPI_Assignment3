@@ -67,12 +67,76 @@ router.post('/signin', async (req, res) => { // Use async/await
   }
 });
 
-router.route('/movies')
+router.route('/movies') // GET, POST, PUT, DELETE APIs for movies with authentication ------------------
     .get(authJwtController.isAuthenticated, async (req, res) => {
-        return res.status(500).json({ success: false, message: 'GET request not supported' });
+        try {
+            const movies = await Movie.find();
+            res.status(200).json(movies);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ success: false, message: 'Something went wrong.' });
+        }
     })
     .post(authJwtController.isAuthenticated, async (req, res) => {
-        return res.status(500).json({ success: false, message: 'POST request not supported' });
+        try {
+            const movie = new Movie(req.body);
+            await movie.save();
+            res.status(201).json({ success: true, message: 'Movie saved.', movie: movie });
+        } catch (err) {
+            console.error(err);
+            res.status(400).json({ success: false, message: err.message });
+        }
+    })
+    .put(authJwtController.isAuthenticated, async (req, res) => {
+        return res.status(405).json({ success: false, message: 'PUT not supported on /movies. Use /movies/:title.' });
+    })
+    .delete(authJwtController.isAuthenticated, async (req, res) => {
+        return res.status(405).json({ success: false, message: 'DELETE not supported on /movies. Use /movies/:title.' });
+    });
+
+router.route('/movies/:title') // GET, POST, PUT, DELETE APIs for movies by title ------------------
+    .get(authJwtController.isAuthenticated, async (req, res) => {
+        try {
+            const movie = await Movie.findOne({ title: req.params.title });
+            if (!movie) {
+                return res.status(404).json({ success: false, message: 'Movie not found.' });
+            }
+            res.status(200).json(movie);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ success: false, message: 'Something went wrong.' });
+        }
+    })
+    .post(authJwtController.isAuthenticated, async (req, res) => {
+        return res.status(405).json({ success: false, message: 'POST not supported on /movies/:title. Use /movies.' });
+    })
+    .put(authJwtController.isAuthenticated, async (req, res) => {
+        try {
+            const movie = await Movie.findOneAndUpdate(
+                { title: req.params.title },
+                req.body,
+                { new: true, runValidators: true }
+            );
+            if (!movie) {
+                return res.status(404).json({ success: false, message: 'Movie not found.' });
+            }
+            res.status(200).json({ success: true, message: 'Movie updated.', movie: movie });
+        } catch (err) {
+            console.error(err);
+            res.status(400).json({ success: false, message: err.message });
+        }
+    })
+    .delete(authJwtController.isAuthenticated, async (req, res) => {
+        try {
+            const movie = await Movie.findOneAndDelete({ title: req.params.title });
+            if (!movie) {
+                return res.status(404).json({ success: false, message: 'Movie not found.' });
+            }
+            res.status(200).json({ success: true, message: 'Movie deleted.' });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ success: false, message: 'Something went wrong.' });
+        }
     });
 
 app.use('/', router);
