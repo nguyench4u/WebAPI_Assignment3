@@ -71,7 +71,7 @@ router.route('/movies') // GET, POST, PUT, DELETE APIs for movies with authentic
     .get(authJwtController.isAuthenticated, async (req, res) => {
         try {
             const movies = await Movie.find();
-            res.status(200).json(movies);
+            res.status(200).json({ success: true, message: "GET movies (Fetch)", movies: movies });
         } catch (err) {
             console.error(err);
             res.status(500).json({ success: false, message: 'Something went wrong.' });
@@ -81,7 +81,7 @@ router.route('/movies') // GET, POST, PUT, DELETE APIs for movies with authentic
         try {
             const movie = new Movie(req.body);
             await movie.save();
-            res.status(201).json({ success: true, message: 'Movie saved.', movie: movie });
+            res.status(201).json({ success: true, message: 'POST movie (Saved).', movie: movie });
         } catch (err) {
             console.error(err);
             res.status(400).json({ success: false, message: err.message });
